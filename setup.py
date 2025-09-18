@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'move_forward = comprobo_project_1.move_forward:main'
+            'FSM = comprobo_project_1.FSM:main',
         ],
     },
 )
