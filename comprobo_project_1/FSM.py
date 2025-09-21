@@ -21,6 +21,8 @@ class FSM(Node):
         self.buffer = 500 # the time of a lookout() swing in ms
         self.proximity = 1 # the distance of detecting to chase in m
         self.current_time = 0.0;
+        self.closest_dist = 0;
+        self.closest_dist_ang = 0;
 
         # pubs & subs
         self.vel_pub = self.create_publisher(Twist, 'cmd_vel', 10)
@@ -59,24 +61,25 @@ class FSM(Node):
         # transitions between FSM
         if lidar_dist < self.proximity:
             self.state = 1
-        elif (state == 1 and lidar_dist > self.proximity):
+        elif (self.state == 1 and lidar_dist < self.proximity):
             self.state = 2
             self.timepost = self.current_time
+            print(f"timepost is: {self.timepost}")
         elif (self.state == 2 and self.current_time >= self.timepost + (self.buffer * 3)):
             self.state = 0
 
 
     def star(self): 
         # Makes robot move in star
-        print(0)
+        print(f"running routes (state 0)")
 
     def chase(self): 
         # Makes robot chase a person
-        print(1)
+        print(f"chasing robot (state 1)")
         
     def lookout(self): 
         # Makes robot go through lookout sequence
-        print(2)
+        print(f"we've lost 'em (state 2)")
 
     def time_loop(self):
         # Keeps track of time since the node begun
@@ -85,14 +88,14 @@ class FSM(Node):
         self.time_pub.publish(time_header)
         
     def get_scan(self, msg):
-        filler = 0
+        print(msg)
 
     def get_time(self, msg):
         # Gets the time of time thread
         sec_millis = msg.stamp.sec * 1000
         nano_millis = msg.stamp.nanosec / 1000
         self.current_time = sec_millis + nano_millis
-        print(self.current_time)
+        #print(self.current_time)
         
 
 def main(args=None):
