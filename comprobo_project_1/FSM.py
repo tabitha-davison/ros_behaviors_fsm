@@ -80,18 +80,19 @@ class FSM(Node):
 
     def time_loop(self):
         # Keeps track of time since the node begun
-        print("running time loop")
         time_header = Header(stamp=self.get_clock().now().to_msg(), frame_id="neato_FSM")
-        print(time_header)
-        #self.vel_pub.pubish(time_header)
+        #print(time_header.stamp)
+        self.time_pub.publish(time_header)
         
     def get_scan(self, msg):
         filler = 0
 
     def get_time(self, msg):
         # Gets the time of time thread
-        print("getting time")
-        self.current_time = 0
+        sec_millis = msg.stamp.sec * 1000
+        nano_millis = msg.stamp.nanosec / 1000
+        self.current_time = sec_millis + nano_millis
+        print(self.current_time)
         
 
 def main(args=None):
