@@ -67,7 +67,48 @@ class FSM(Node):
 
 
     def star(self): 
-        # Makes robot move in star
+   
+        # Parameters
+        forward_speed = 0.12                 # m/s
+        turn_speed    = 0.35                 # rad/s
+        edge_length   = 0.6                  # meters per star edge
+        turn_angle    = math.radians(144.0)  # 144° turn for star
+        heading_deg   = 36                   # rotate so one point faces up
+        dt            = 0.02                 
+
+        def drive(lin, ang, duration_s):
+            """Publish velocity (lin, ang) for duration_s seconds, then stop."""
+            msg = Twist()
+            msg.linear.x  = lin
+            msg.angular.z = ang
+            end_time = time.time() + duration_s
+            while time.time() < end_time:
+                self.vel_pub.publish(msg)
+                time.sleep(dt)
+            # stop
+            msg.linear.x = 0.0
+            msg.angular.z = 0.0
+            self.vel_pub.publish(msg)
+            time.sleep(0.1)
+
+        # Initial orientation
+        if abs(heading_deg) > 1e-6:
+            node.get_logger().info("Aligning heading")
+            drive(0.0, turn_speed, math.radians(heading_deg) / turn_speed)
+
+        # Draw the 5 edges
+        for i in range(5):
+            node.get_logger().info(f"[Star] Edge {i+1}/5")
+            drive(forward_speed, 0.0, edge_length / forward_speed)
+
+            node.get_logger().info(f"[Star] Turn {i+1}/5 (144°)")
+            drive(0.0, turn_speed, turn_angle / turn_speed)
+
+        node.get_logger().info("Star complete.")
+
+        node.destroy_node()
+        rclpy.shutdown()
+
         print(0)
 
     def chase(self): 
