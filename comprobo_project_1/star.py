@@ -19,14 +19,14 @@ class DrawStar(Node):
     def __init__(self):
         super().__init__('draw_star_with_estop')
 
-        # --- Parameters ---
+        # Parameters 
         self.forward_speed = 0.12             # m/s
         self.turn_speed = 0.35                # rad/s (positive = left)
         self.edge_length = 0.6                # meters per star edge
         self.turn_angle = math.radians(144.0) # 144° left turn makes the star egdes
         self.initial_heading_offset_deg = 36  # rotate so top point faces up
         self.rate_dt = 0.02                   # seconds, estop check frequency
-        # ---------------------------------------
+        # 
 
         self.e_stop = Event()
         self.vel_pub = self.create_publisher(Twist, 'cmd_vel', 10)
@@ -36,23 +36,23 @@ class DrawStar(Node):
         self.run_loop_thread = Thread(target=self.run_loop, daemon=True)
         self.run_loop_thread.start()
 
-    # ---------------- Motion primitives ----------------
+    # Motion primitives 
 
     def handle_estop(self, msg: Bool):
-        """Handle estop messages (True = stop)."""
+        """Handle estop messages (True = stop)"""
         if msg.data:
             self.e_stop.set()
             self.drive(0.0, 0.0)
 
     def drive(self, linear: float, angular: float):
-        """Publish a Twist with specified linear (x) and angular (z) velocity."""
+        """Publish specified linear (x) and angular (z) velocity."""
         msg = Twist()
         msg.linear.x = float(linear)
         msg.angular.z = float(angular)
         self.vel_pub.publish(msg)
 
     def drive_forward(self, distance: float):
-        """Drive straight for 'distance' meters."""
+        """Drive straight """
         if distance <= 0:
             return
         duration = distance / max(self.forward_speed, 1e-6)
@@ -69,7 +69,7 @@ class DrawStar(Node):
         self.drive(0.0, 0.0)
 
     def turn_left(self, angle_rad: float):
-        """Turn left by 'angle_rad' radians."""
+        """Turn left """
         if angle_rad <= 0:
             return
         duration = angle_rad / max(self.turn_speed, 1e-6)
@@ -85,7 +85,7 @@ class DrawStar(Node):
 
         self.drive(0.0, 0.0)
 
-    # ---------------- Pattern runner ----------------
+    # Star Pattern runner 
 
     def run_loop(self):
         """Executes the star path: 5 edges with 144° turns between."""
