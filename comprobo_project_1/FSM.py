@@ -5,7 +5,7 @@ from threading import Thread, Event
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist, PointStamped, Point
 from std_msgs.msg import Header
-import math
+import math, time
 
 class FSM(Node):
     """A signel node ros2 program that transforms a neato into the
@@ -54,12 +54,12 @@ class FSM(Node):
     def state_handler(self): 
         """Handles transitions between states"""
         # find the closest lidar distance
-        lidar_dist  = 0 #DO THIS
+        lidar_dist  = 10000 #DO THIS
 
         # transitions between FSM
         if lidar_dist < self.proximity:
             self.state = 1
-        elif (state == 1 and lidar_dist > self.proximity):
+        elif (self.state == 1 and lidar_dist > self.proximity):
             self.state = 2
             self.timepost = self.current_time
         elif (self.state == 2 and self.current_time >= self.timepost + (self.buffer * 3)):
@@ -93,23 +93,18 @@ class FSM(Node):
 
         # Initial orientation
         if abs(heading_deg) > 1e-6:
-            node.get_logger().info("Aligning heading")
+            # node.get_logger().info("Aligning heading")
             drive(0.0, turn_speed, math.radians(heading_deg) / turn_speed)
 
         # Draw the 5 edges
         for i in range(5):
-            node.get_logger().info(f"[Star] Edge {i+1}/5")
+            # node.get_logger().info(f"[Star] Edge {i+1}/5")
             drive(forward_speed, 0.0, edge_length / forward_speed)
 
-            node.get_logger().info(f"[Star] Turn {i+1}/5 (144°)")
+            # node.get_logger().info(f"[Star] Turn {i+1}/5 (144°)")
             drive(0.0, turn_speed, turn_angle / turn_speed)
 
-        node.get_logger().info("Star complete.")
-
-        node.destroy_node()
-        rclpy.shutdown()
-
-        print(0)
+        # node.get_logger().info("Star complete.")
 
     def chase(self): 
         # Makes robot chase a person
