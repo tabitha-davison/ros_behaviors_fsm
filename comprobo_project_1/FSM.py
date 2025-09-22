@@ -22,7 +22,7 @@ class FSM(Node):
         self.proximity = 0.001 # the distance of detecting to chase in m
         self.current_time = 0.0;
         self.closest_dist = 0;
-        self.closest_dist_ang = 0;
+        self.closest_dist_rad = 0.0;
 
         # pubs & subs
         self.vel_pub = self.create_publisher(Twist, 'cmd_vel', 10)
@@ -43,20 +43,26 @@ class FSM(Node):
         """run the robot states"""
         # check transitions
         self.state_handler()
+        
+        print(f"CLOSEST DIST IS: {self.closest_dist}")
+        print(f"CLOSEST DIST ANG IS: {self.closest_dist_rad}")
 
         # run the current state
         match self.state:
             case 0:
-                self.lookout()
+                filler = 0
+                self.star()
             case 1:
+                filler = 0
                 self.chase()
             case 2:
+                filler = 0
                 self.lookout()
         
     def state_handler(self): 
         """Handles transitions between states"""
         # find the closest lidar distance
-        lidar_dist  = 10000 #DO THIS
+        lidar_dist = self.closest_dist
 
         # transitions between FSM
         if lidar_dist < self.proximity:
@@ -64,7 +70,6 @@ class FSM(Node):
         elif (self.state == 1 and lidar_dist > self.proximity):
             self.state = 2
             self.timepost = self.current_time
-            print(f"timepost is: {self.timepost}")
         elif (self.state == 2 and self.current_time >= self.timepost + (self.buffer * 3)):
             self.state = 0
 
@@ -103,9 +108,6 @@ class FSM(Node):
             drive(forward_speed, 0.0, edge_length / forward_speed)
             drive(0.0, turn_speed, turn_angle / turn_speed)
 
-        # Makes robot move in star
-        print(f"running routes (state 0)")
-
     def chase(self): 
         # Makes robot chase a person
         print(f"chasing robot (state 1)")
@@ -142,18 +144,25 @@ class FSM(Node):
     def time_loop(self):
         # Keeps track of time since the node begun
         time_header = Header(stamp=self.get_clock().now().to_msg(), frame_id="neato_FSM")
-        #print(time_header.stamp)
         self.time_pub.publish(time_header)
         
     def get_scan(self, msg):
-        print(msg)
+        # len(msg.ranges) = 361
+        lowest_val = msg.ranges[0]
+        lowest_index = 0
+        for i in range(len(msg.ranges) - 1):
+            if lowest_val > msg.ranges[i]:
+                lowest_val = msg.ranges[i]
+                lowest_index = i
+
+        self.closest_dist = lowest_val
+        self.closest_dist_rad = (lowest_index / 360) * 2 * math.pi
 
     def get_time(self, msg):
         # Gets the time of time thread
         sec_millis = msg.stamp.sec * 1000
         nano_millis = msg.stamp.nanosec / 1000
         self.current_time = sec_millis + nano_millis
-        #print(self.current_time)
         
 
 def main(args=None):
