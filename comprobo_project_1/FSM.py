@@ -19,7 +19,7 @@ class FSM(Node):
         self.state = 0 # the state handler variable
         self.timepost = 0 # the time lookout() state change in ms
         self.buffer = 500 # the time of a lookout() swing in ms
-        self.proximity = 1 # the distance of detecting to chase in m
+        self.proximity = 0.001 # the distance of detecting to chase in m
         self.current_time = 0.0;
         self.closest_dist = 0;
         self.closest_dist_ang = 0;
@@ -47,7 +47,7 @@ class FSM(Node):
         # run the current state
         match self.state:
             case 0:
-                self.star()
+                self.lookout()
             case 1:
                 self.chase()
             case 2:
@@ -96,18 +96,12 @@ class FSM(Node):
 
         # Initial orientation
         if abs(heading_deg) > 1e-6:
-            # node.get_logger().info("Aligning heading")
             drive(0.0, turn_speed, math.radians(heading_deg) / turn_speed)
 
         # Draw the 5 edges
         for i in range(5):
-            # node.get_logger().info(f"[Star] Edge {i+1}/5")
             drive(forward_speed, 0.0, edge_length / forward_speed)
-
-            # node.get_logger().info(f"[Star] Turn {i+1}/5 (144°)")
             drive(0.0, turn_speed, turn_angle / turn_speed)
-
-        # node.get_logger().info("Star complete.")
 
         # Makes robot move in star
         print(f"running routes (state 0)")
@@ -117,7 +111,32 @@ class FSM(Node):
         print(f"chasing robot (state 1)")
         
     def lookout(self): 
-        # Makes robot go through lookout sequence
+
+        # Parameters
+        turn_speed = 0.35                 # rad/s
+        turn_angle = math.radians(120.0)  # 120° in radians
+        dt         = 0.02                 # 
+
+        def turn(ang_vel, duration_s):
+            """Publish angular velocity for duration_s seconds, then stop."""
+            msg = Twist()
+            msg.angular.z = ang_vel
+            end_time = time.time() + duration_s
+            while time.time() < end_time:
+                self.vel_pub.publish(msg)
+                time.sleep(dt)
+            # stop
+            msg.angular.z = 0.0
+            self.vel_pub.publish(msg)
+            time.sleep(0.1)
+
+        # Pan sequence
+        # Left 120°
+        turn(turn_speed, turn_angle / turn_speed)
+
+        # Right 120° (negative angular velocity)
+        turn(-turn_speed, turn_angle / turn_speed)
+
         print(f"we've lost 'em (state 2)")
 
     def time_loop(self):
