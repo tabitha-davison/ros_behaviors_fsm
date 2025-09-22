@@ -139,8 +139,6 @@ class FSM(Node):
         # Right 120° (negative angular velocity)
         turn(-turn_speed, turn_angle / turn_speed)
 
-        print(f"we've lost 'em (state 2)")
-
     def time_loop(self):
         # Keeps track of time since the node begun
         time_header = Header(stamp=self.get_clock().now().to_msg(), frame_id="neato_FSM")
@@ -148,15 +146,19 @@ class FSM(Node):
         
     def get_scan(self, msg):
         # len(msg.ranges) = 361
-        lowest_val = msg.ranges[0]
-        lowest_index = 0
+        lower_post = .25 #distance in meters to filter below
+        upper_post = 1 #distance in meters to filter above
+        filtered_dist_av = 0;
+        filtered_ang_av = 0;
+        average_dividend = 0;
         for i in range(len(msg.ranges) - 1):
-            if lowest_val > msg.ranges[i]:
-                lowest_val = msg.ranges[i]
-                lowest_index = i
-
-        self.closest_dist = lowest_val
-        self.closest_dist_rad = (lowest_index / 360) * 2 * math.pi
+            if lower_post < msg.ranges[i] and msg.ranges[i] < upper_post:
+                filtered_dist_av = filtered_dist_av + msg.ranges[i]
+                filtered_ang_av = filtered_dist_av + i 
+                average_dividend = average_dividend + 1
+        
+        self.closest_dist = filtered_dist_av / average_dividend
+        self.closest_dist_rad = filtered_ang_av / average_dividend
 
     def get_time(self, msg):
         # Gets the time of time thread
